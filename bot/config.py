@@ -8,8 +8,8 @@ from typing import List
 class TradingConfig:
     # Paper trading
     initial_balance: float = 200.0
-    risk_per_trade_pct: float = 1.0  # 1% risk per trade
-    max_open_trades: int = 10
+    risk_per_trade_pct: float = 5.0  # 5% risk per trade (aggressive)
+    max_open_trades: int = 5
 
     # Instruments
     forex_pairs: List[str] = field(default_factory=lambda: [
@@ -43,7 +43,7 @@ class TradingConfig:
     orb_candles: int = 3
 
     # Risk management
-    risk_reward_ratio: float = 2.0  # 1:2 RR
+    risk_reward_ratio: float = 3.0  # 1:3 RR
     trailing_stop_pct: float = 0.15  # optional trailing stop
 
     @property
