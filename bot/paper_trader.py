@@ -7,6 +7,8 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
 
+import pytz
+
 from bot.config import TradingConfig
 
 logger = logging.getLogger(__name__)
@@ -130,7 +132,7 @@ class PaperTrader:
             size=size,
             risk_amount=risk_amount,
             model=model,
-            opened_at=datetime.utcnow().isoformat(),
+            opened_at=datetime.now(tz=pytz.utc).isoformat(),
         )
 
         self.account.next_id += 1
@@ -175,7 +177,7 @@ class PaperTrader:
         trade.exit_price = exit_price
         trade.pnl = round(pnl, 4)
         trade.status = status
-        trade.closed_at = datetime.utcnow().isoformat()
+        trade.closed_at = datetime.now(tz=pytz.utc).isoformat()
 
         self.account.balance += pnl
         self.account.save()

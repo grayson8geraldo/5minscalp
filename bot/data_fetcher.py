@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import pandas as pd
+import pytz
 import yfinance as yf
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ def fetch_candles(
     """
     try:
         ticker = yf.Ticker(symbol)
-        end = datetime.utcnow()
+        end = datetime.now(tz=pytz.utc)
         start = end - timedelta(days=days)
         df = ticker.history(start=start, end=end, interval=interval)
         if df.empty:

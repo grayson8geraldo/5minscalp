@@ -273,13 +273,21 @@ def find_signals(
 def _compute_sl_tp(
     direction: str, entry: float, ref_level: float, cfg: TradingConfig
 ):
-    """Compute stop-loss & take-profit from a reference S/R level."""
+    """Compute stop-loss & take-profit from a reference S/R level.
+
+    Uses a minimum SL distance of 0.1% of price so that trades near the
+    exact S/R level still get a practical stop-loss.
+    """
+    min_sl_dist = entry * 0.001  # 0.1% of price (~10 pips on majors)
+
     if direction == "long":
-        sl = ref_level - abs(entry - ref_level) * 0.3
-        dist = entry - sl
+        raw_dist = abs(entry - ref_level) * 1.3
+        dist = max(raw_dist, min_sl_dist)
+        sl = entry - dist
         tp = entry + dist * cfg.risk_reward_ratio
     else:
-        sl = ref_level + abs(entry - ref_level) * 0.3
-        dist = sl - entry
+        raw_dist = abs(entry - ref_level) * 1.3
+        dist = max(raw_dist, min_sl_dist)
+        sl = entry + dist
         tp = entry - dist * cfg.risk_reward_ratio
     return sl, tp

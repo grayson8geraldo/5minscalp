@@ -18,6 +18,15 @@ UTC = pytz.utc
 ET = pytz.timezone("US/Eastern")
 
 
+def is_market_open() -> bool:
+    """Check if it's a weekday (forex trades Sun evening–Fri evening)."""
+    now_et = datetime.now(ET)
+    # Mon=0 .. Fri=4
+    if now_et.weekday() > 4:
+        return False
+    return True
+
+
 def is_ny_session_active() -> bool:
     """Check if we're currently in NY session (9:30-16:00 ET)."""
     now_et = datetime.now(ET)
@@ -26,20 +35,14 @@ def is_ny_session_active() -> bool:
     return start <= now_et.time() <= end
 
 
-def is_market_open() -> bool:
-    """Check if it's a weekday and roughly market hours."""
-    now_et = datetime.now(ET)
-    # Mon=0 .. Fri=4
-    if now_et.weekday() > 4:
-        return False
-    return True
-
-
 class TradingBot:
     def __init__(self, cfg: TradingConfig):
         self.cfg = cfg
         self.trader = PaperTrader(cfg)
-        self.processed_signals: set = set()  # avoid duplicates
+        # Rebuild processed signals from existing trades to avoid duplicates after restart
+        self.processed_signals: set = set()
+        for t in self.trader.account.trades:
+            self.processed_signals.add(f"{t.symbol}_{t.model}_{t.opened_at}")
 
     def scan_all_symbols(self) -> List[TradeSignal]:
         """Scan all configured symbols for trade signals."""
@@ -113,16 +116,19 @@ class TradingBot:
         logger.info("Cycle start: %s", datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"))
         logger.info("Balance: $%.2f", self.trader.account.balance)
 
-        # Update existing trades first
+        # Update existing trades first (always, regardless of session)
         self.update_open_trades()
 
-        # Scan for new signals
-        signals = self.scan_all_symbols()
-        if signals:
-            logger.info("Found %d signal(s)", len(signals))
-            self.execute_signals(signals)
+        # Only scan for new signals during NY session (distribution phase)
+        if not is_ny_session_active():
+            logger.info("Outside NY session — monitoring open trades only")
         else:
-            logger.info("No signals found this cycle")
+            signals = self.scan_all_symbols()
+            if signals:
+                logger.info("Found %d signal(s)", len(signals))
+                self.execute_signals(signals)
+            else:
+                logger.info("No signals found this cycle")
 
         # Print stats
         stats = self.trader.get_stats()
@@ -146,10 +152,11 @@ class TradingBot:
                     self.run_cycle()
                 else:
                     logger.info("Market closed. Waiting...")
+
+                time_mod.sleep(interval_minutes * 60)
             except KeyboardInterrupt:
                 logger.info("Bot stopped by user")
                 break
             except Exception as e:
                 logger.error("Error in cycle: %s", e, exc_info=True)
-
-            time_mod.sleep(interval_minutes * 60)
+                time_mod.sleep(interval_minutes * 60)
