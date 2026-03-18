@@ -9,14 +9,37 @@ class TradingConfig:
     # Paper trading
     initial_balance: float = 200.0
     risk_per_trade_pct: float = 1.0  # 1% risk per trade
-    max_open_trades: int = 3
+    max_open_trades: int = 10
 
     # Instruments
     forex_pairs: List[str] = field(default_factory=lambda: [
-        "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X",
+        # Majors
+        "EURUSD=X", "GBPUSD=X", "USDJPY=X", "USDCHF=X",
+        "AUDUSD=X", "USDCAD=X", "NZDUSD=X",
+        # Crosses
+        "EURGBP=X", "EURJPY=X", "GBPJPY=X", "AUDJPY=X",
+        "EURAUD=X", "EURCHF=X", "GBPCHF=X", "CADJPY=X",
+        "NZDJPY=X", "GBPAUD=X", "AUDCAD=X", "AUDNZD=X",
+        "EURNZD=X", "EURCAD=X", "GBPCAD=X", "GBPNZD=X",
+        "CHFJPY=X", "CADCHF=X", "NZDCAD=X", "NZDCHF=X",
     ])
     stocks: List[str] = field(default_factory=lambda: [
-        "AAPL", "MSFT", "TSLA", "AMZN", "SPY",
+        # Tech
+        "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA",
+        "AMD", "INTC", "CRM", "ORCL", "ADBE", "NFLX", "PYPL",
+        "SQ", "SHOP", "UBER", "ABNB", "SNAP", "PINS",
+        # Finance
+        "JPM", "BAC", "GS", "MS", "V", "MA", "AXP",
+        # Healthcare
+        "JNJ", "UNH", "PFE", "ABBV", "MRK", "LLY",
+        # Energy
+        "XOM", "CVX", "COP", "SLB", "OXY",
+        # Consumer
+        "WMT", "COST", "HD", "NKE", "SBUX", "MCD", "KO", "PEP",
+        # Industrial
+        "BA", "CAT", "DE", "GE", "HON", "UPS",
+        # ETFs
+        "SPY", "QQQ", "IWM", "DIA", "XLF", "XLE", "XLK", "GLD", "SLV",
     ])
 
     # Timeframe
