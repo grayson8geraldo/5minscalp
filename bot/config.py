@@ -23,24 +23,7 @@ class TradingConfig:
         "EURNZD=X", "EURCAD=X", "GBPCAD=X", "GBPNZD=X",
         "CHFJPY=X", "CADCHF=X", "NZDCAD=X", "NZDCHF=X",
     ])
-    stocks: List[str] = field(default_factory=lambda: [
-        # Tech
-        "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA",
-        "AMD", "INTC", "CRM", "ORCL", "ADBE", "NFLX", "PYPL",
-        "SQ", "SHOP", "UBER", "ABNB", "SNAP", "PINS",
-        # Finance
-        "JPM", "BAC", "GS", "MS", "V", "MA", "AXP",
-        # Healthcare
-        "JNJ", "UNH", "PFE", "ABBV", "MRK", "LLY",
-        # Energy
-        "XOM", "CVX", "COP", "SLB", "OXY",
-        # Consumer
-        "WMT", "COST", "HD", "NKE", "SBUX", "MCD", "KO", "PEP",
-        # Industrial
-        "BA", "CAT", "DE", "GE", "HON", "UPS",
-        # ETFs
-        "SPY", "QQQ", "IWM", "DIA", "XLF", "XLE", "XLK", "GLD", "SLV",
-    ])
+    stocks: List[str] = field(default_factory=list)
 
     # Timeframe
     interval: str = "5m"  # 5-minute candles

@@ -186,11 +186,12 @@ def check_sd_model(
 def check_orb_model(
     df: pd.DataFrame, amd: AMDContext, cfg: TradingConfig
 ) -> Optional[TradeSignal]:
-    """ORB model: breakout of first 15 min of NY session, pullback + engulfing.
+    """ORB model: breakout of first 15 min of NY session, pullback + engulfing."""
+    if not amd.expected_ny_direction:
+        return None
 
-    For stocks: uses prev_day_bias or pure breakout direction.
-    For forex: uses AMD expected direction.
-    """
+    direction = amd.expected_ny_direction
+
     # Get ORB range: first 3 five-minute candles of NY session
     ny_start_t = time(13, 30, tzinfo=UTC)
     ny_orb_end_t = time(13, 45, tzinfo=UTC)
@@ -211,47 +212,37 @@ def check_orb_model(
     if len(after_orb) < 3:
         return None
 
-    # Determine direction: AMD for forex, prev_day_bias or breakout for stocks
-    if amd.expected_ny_direction:
-        directions = [amd.expected_ny_direction]
-    elif amd.is_stock:
-        # For stocks without clear bias, try both directions (breakout decides)
-        directions = ["long", "short"]
-    else:
+    eng_dir = "bullish" if direction == "long" else "bearish"
+    engulfing = detect_engulfing(after_orb, eng_dir)
+    if not engulfing:
         return None
 
-    for direction in directions:
-        eng_dir = "bullish" if direction == "long" else "bearish"
-        engulfing = detect_engulfing(after_orb, eng_dir)
-        if not engulfing:
-            continue
+    trigger_price = engulfing.close_price
 
-        trigger_price = engulfing.close_price
-
-        if direction == "long":
-            broke_high = after_orb["high"].max() > orb_high
-            pullback = trigger_price <= orb_high * 1.003
-            if broke_high and pullback:
-                sl = orb_low
-                dist = trigger_price - sl
-                tp = trigger_price + dist * cfg.risk_reward_ratio
-                return TradeSignal(
-                    symbol=amd.symbol, direction=direction,
-                    entry_price=trigger_price, stop_loss=sl, take_profit=tp,
-                    model="ORB", timestamp=engulfing.trigger_time, engulfing=engulfing,
-                )
-        else:
-            broke_low = after_orb["low"].min() < orb_low
-            pullback = trigger_price >= orb_low * 0.997
-            if broke_low and pullback:
-                sl = orb_high
-                dist = sl - trigger_price
-                tp = trigger_price - dist * cfg.risk_reward_ratio
-                return TradeSignal(
-                    symbol=amd.symbol, direction=direction,
-                    entry_price=trigger_price, stop_loss=sl, take_profit=tp,
-                    model="ORB", timestamp=engulfing.trigger_time, engulfing=engulfing,
-                )
+    if direction == "long":
+        broke_high = after_orb["high"].max() > orb_high
+        pullback = trigger_price <= orb_high * 1.003
+        if broke_high and pullback:
+            sl = orb_low
+            dist = trigger_price - sl
+            tp = trigger_price + dist * cfg.risk_reward_ratio
+            return TradeSignal(
+                symbol=amd.symbol, direction=direction,
+                entry_price=trigger_price, stop_loss=sl, take_profit=tp,
+                model="ORB", timestamp=engulfing.trigger_time, engulfing=engulfing,
+            )
+    else:
+        broke_low = after_orb["low"].min() < orb_low
+        pullback = trigger_price >= orb_low * 0.997
+        if broke_low and pullback:
+            sl = orb_high
+            dist = sl - trigger_price
+            tp = trigger_price - dist * cfg.risk_reward_ratio
+            return TradeSignal(
+                symbol=amd.symbol, direction=direction,
+                entry_price=trigger_price, stop_loss=sl, take_profit=tp,
+                model="ORB", timestamp=engulfing.trigger_time, engulfing=engulfing,
+            )
 
     return None
 
