@@ -60,13 +60,19 @@ class TradingBot:
                 continue
 
             if not amd.expected_ny_direction:
-                logger.info("  %s: No clear AMD direction, skipping", symbol)
+                logger.info("  %s: No clear direction, skipping", symbol)
                 continue
 
-            logger.info(
-                "  %s: AMD direction=%s (manipulation=%s)",
-                symbol, amd.expected_ny_direction, amd.london_manipulation,
-            )
+            if amd.is_stock:
+                logger.info(
+                    "  %s: [Stock] direction=%s (prev_day_bias=%s)",
+                    symbol, amd.expected_ny_direction, amd.prev_day_bias,
+                )
+            else:
+                logger.info(
+                    "  %s: [Forex] AMD direction=%s (manipulation=%s)",
+                    symbol, amd.expected_ny_direction, amd.london_manipulation,
+                )
 
             signals = find_signals(df, amd, self.cfg)
             all_signals.extend(signals)
